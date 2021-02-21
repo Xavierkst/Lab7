@@ -16,7 +16,7 @@
       }
 
       #recordIDcontainer {
-        display: none;
+        display: nones;
       }
     </style>
   </head>
@@ -85,6 +85,15 @@
       // the writeup to view the URL pattern for fetch one and fetch all
       function fetchAll() {
         // TODO
+        // fetch('')
+        let webURL = document.getElementById("endpoint").value;
+        fetch(webURL).then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          document.getElementById("output").innerHTML = JSON.stringify(data);
+        }).catch(function (err) {
+          console.warn('there was an error fetching!');
+        });
       }
 
       // This function should fetch one entry from the given endpoint.
@@ -93,6 +102,23 @@
       // the writeup to view the URL pattern for fetch one and fetch all
       function fetchOne() {
         // TODO
+        let resp;
+        let post_id = prompt("Enter record id");
+        let webURL = document.getElementById("endpoint").value + "/" + post_id;
+        fetch(webURL).then(function (response) {
+          resp = ( response.status == 404 );
+
+          return response.json();
+        }).then(function (data) {
+          if (resp) {
+            document.getElementById("output").innerHTML = 'Network Error: 404';
+          }
+          else {
+            document.getElementById("output").innerHTML = JSON.stringify(data);
+          }
+        }).catch(function (err) {
+          console.warn('Network Error: 404');
+        });
       }
 
       // This function should use fetch to create one entry in the given endpoint.
@@ -101,6 +127,35 @@
       // the writeup to view the URL pattern for create and update
       function createRecord() {
         // TODO
+        let webURL = document.getElementById("endpoint").value;
+        let idNum;
+        fetch(webURL).then(function (response) {
+          return response.json();
+        }).then(function (data) {
+          idNum = data.length;
+        }).catch(function (err) {
+          console.warn('there was an error fetching!');
+        });
+        document.querySelector('form#recordForm').style.display = "inline-block";
+        document.getElementById('recordIDcontainer').style.display = "none";
+        if (arguments[0] == 'submit') {
+          let auth = document.getElementById('author').value;
+          let id1 = document.getElementById('recordID').value;
+          let tit = document.getElementById('title').value;
+
+          idNum = idNum + 1;
+          let xhr = new XMLHttpRequest();
+          xhr.open("POST", webURL, true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify({
+              "id": idNum,
+              "author" : auth,
+              "title" : tit
+          }));
+        }
+        document.getElementById('author').value = "";
+        document.getElementById('recordID').value = "";
+        document.getElementById('title').value = "";
       }
 
       // This function should use fetch to update one existing entry in the given endpoint.
@@ -109,16 +164,56 @@
       // the writeup to view the URL pattern for create and update
       function updateRecord() {
         // TODO
+        document.querySelector('form#recordForm').style.display = "inline-block";
+        document.getElementById('recordIDcontainer').style.display = "inline-block";
+        if (arguments[0] == 'submit') {
+          let auth = document.getElementById('author').value;
+          let id1 = document.getElementById('recordID').value;
+          let tit = document.getElementById('title').value;
+
+          let webURL = document.getElementById("endpoint").value;
+          let xhr = new XMLHttpRequest();
+          xhr.open("PUT", webURL + '/' + id1 , false);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.send(JSON.stringify({
+              "id": id1,
+              "author" : auth,
+              "title" : tit
+          }));
+
+        fetch(webURL+ '/' + id1).then(function (response) {
+                  return response.json();
+                }).then(function (data) {
+                  document.getElementById("output").innerHTML = JSON.stringify(data);
+                })
+        }
+        document.getElementById('author').value = "";
+        document.getElementById('recordID').value = "";
+        document.getElementById('title').value = "";
       }
 
       // This function should use fetch to delete one existing entry in the given endpoint.
       // From the 4 CRUD actions, this is the DELETE action, and uses the DELETE http method.
       // The main difference from fetchOne() will be the HTTP method you use to make your
-      // request; check the writeup to view the URL pattern for get one and delete. THERE IS NO 
+      // request; check the writeup to view the URL pattern for get one and delete. THERE IS NO
       // delete all, only delete one.
       function deleteRecord() {
         // TODO
-      }
+        let post_id = prompt("Enter record id");
+        let webURL = document.getElementById("endpoint").value;
+        return fetch(webURL + '/' + post_id, {
+          method: 'delete'
+        })
+        .then(response => response.json());
+
+    //     fetch(webURL+ '/' + id1).then(function (response) {
+    //                   return response.json();
+    //     }).then(function (data) {
+    //         document.getElementById("output").innerHTML = "{}";
+    //     }).catch(function (err) {
+    //       console.warn('there was an error fetching!');
+    //     });
+    }
 
       window.addEventListener('DOMContentLoaded', () => {
         // Action Form Event Listener
@@ -129,24 +224,33 @@
             let command = document.getElementById('action').value;
 
             switch (command) {
-              case "List All":
+              case "List All": {
                 fetchAll();
+                document.querySelector('form#recordForm').style.display = "none";
                 break;
-              case "List One":
+              }
+              case "List One": {
                 fetchOne();
+                document.querySelector('form#recordForm').style.display = "none";
                 break;
+              }
               case "Create":
                 createRecord('show');
                 break;
-              case "Update":
+              case "Update": {
                 updateRecord('show');
+                // document.querySelector('form#recordForm').style.display = "none";
                 break;
-              case "Delete":
+              }
+              case "Delete": {
                 deleteRecord();
+                document.querySelector('form#recordForm').style.display = "none";
                 break;
+              }
               default:
                 alert("Error: Illegal Action");
             }
+
           });
 
         // Record Form Event Listener
@@ -155,7 +259,7 @@
           .addEventListener("submit", event => {
             event.preventDefault();
             let command = document.getElementById('action').value;
-            
+
             switch (command) {
               case "Create":
                 createRecord('submit');
